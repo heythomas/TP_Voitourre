@@ -17,7 +17,7 @@ class My_Cars(ServiceBase):
     @rpc(_returns=Iterable(Unicode))
     def get_cars(ctx):
         for i in range(len(cars)):
-            yield cars[i][0] + " Autonomie(km):" + str(cars[i][1]) + " Temps de Recharge (min):" + str(cars[i][2])
+            yield cars[i][0] + " - Autonomie(km): " + str(cars[i][1]) + " - Temps de Recharge (min): " + str(cars[i][2])
     
 application = Application([My_Cars], 'spyne.examples.hello.soap', in_protocol=Soap11(validator='lxml'), out_protocol=Soap11())
 wsgi_application = WsgiApplication(application)
