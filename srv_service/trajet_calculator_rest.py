@@ -19,21 +19,21 @@ class CalculTempsTrajet(Resource):
 
         # Data
         vitesse = 130/60
-        long_trajet = args["long_trajet"]
-        autonomie = args["autonomie"]
-        voiture = args["voiture"]
-        tps_recharge = args["tps_recharge"]
+        long_trajet = float(args["long_trajet"])
+        autonomie = float(args["autonomie"])
+        voiture = float(args["voiture"])
+        tps_recharge = float(args["tps_recharge"])
 
         # Calcul du temps de trajet
         trajetFini = False
         trajet_restant = long_trajet
         autonomie_restante = autonomie
-        temps = 0
+        temps = 0.0
 
         # Calcul
         while(not trajetFini):
             if(trajet_restant <= autonomie_restante):
-                temps += trajet_restant/vitesse
+                temps += trajet_restant//vitesse
                 trajetFini = True
             else:
                 temps += autonomie_restante/vitesse
