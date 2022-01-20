@@ -31,7 +31,7 @@ class CalculTempsTrajet(Resource):
         temps = 0
 
         # Calcul
-        while(!trajetFini):
+        while(not trajetFini):
             if(trajet_restant <= autonomie_restante):
                 temps += trajet_restant/vitesse
                 trajetFini = True
