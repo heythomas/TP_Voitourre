@@ -33,17 +33,18 @@ class CalculTempsTrajet(Resource):
         # Calcul
         while(not trajetFini):
             if(trajet_restant <= autonomie_restante):
-                temps += trajet_restant//vitesse
+                temps += trajet_restant/vitesse
                 trajetFini = True
             else:
                 temps += autonomie_restante/vitesse
                 trajet_restant -= autonomie_restante
                 autonomie_restante = 0
-                if(trajet_restant <= autonomie*0.8):
-                    temps += (autonomie/trajet_restant * tps_recharge)*1.2
+                if(trajet_restant <= autonomie):
+                    temps += trajet_restant*tps_recharge/autonomie
                     autonomie_restante = trajet_restant
                 else:
                     temps += tps_recharge
+                    autonomie_restante = autonomie
         
         return {'temps': temps}, 200
 
