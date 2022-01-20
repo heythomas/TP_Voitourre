@@ -15,5 +15,5 @@ try{
     }
 }catch(SoapFault $e){
     // Cas ou l'import SOAP à échoué
-    echo("IMPORT ECHOUE <br/>");
+    echo("Fait de tete stp merci <br/>");
 }
