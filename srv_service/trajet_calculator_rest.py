@@ -39,8 +39,8 @@ class CalculTempsTrajet(Resource):
                 temps += autonomie_restante/vitesse
                 trajet_restant -= autonomie_restante
                 autonomie_restante = 0
-                if(trajet_restant <= autonomie):
-                    temps += trajet_restant*tps_recharge/autonomie
+                if(trajet_restant <= autonomie*0.9):
+                    temps += ((trajet_restant*tps_recharge)/autonomie)*1.1
                     autonomie_restante = trajet_restant
                 else:
                     temps += tps_recharge
