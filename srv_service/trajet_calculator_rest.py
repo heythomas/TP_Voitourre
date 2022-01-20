@@ -21,7 +21,7 @@ class CalculTempsTrajet(Resource):
         vitesse = 130/60
         long_trajet = float(args["long_trajet"])
         autonomie = float(args["autonomie"])
-        voiture = float(args["voiture"])
+        voiture = args["voiture"]
         tps_recharge = float(args["tps_recharge"])
 
         # Calcul du temps de trajet
