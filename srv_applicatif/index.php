@@ -7,6 +7,7 @@ try{
     // Print des résultats obtenus dans un menu déroulant
     foreach ($resultats as $res) {
         echo("<select name='cars' id='car_selector'>");
+        echo("<option value=''>Veuillez sélectionner une voiture...</option><br/>");
         foreach($res->string as $el){
             echo("<option value=''>".$el."</option><br/>");
         }
