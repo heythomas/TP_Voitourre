@@ -1,12 +1,15 @@
 from flask import Flask
+from flask import jsonify
 from flask_restful import Resource, Api, reqparse
 import ast
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 api = Api(app)
 
 class CalculTempsTrajet(Resource):
-    def post(self):
+    def get(self):
         # Récupération des données de l'URL
         parser = reqparse.RequestParser()
         parser.add_argument('voiture', required=True)
@@ -46,7 +49,9 @@ class CalculTempsTrajet(Resource):
                     temps += tps_recharge
                     autonomie_restante = autonomie
         
-        return {'temps': temps}, 200
+        response = jsonify({'temps': temps})
+        # response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
 
 
 
