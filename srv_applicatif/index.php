@@ -116,6 +116,7 @@
         });
 
         function traceRoute(){
+
             //STEP ONE, GET NAIVE ROUTE KM
             routeControl = L.Routing.control({
                 waypoints: [
@@ -140,25 +141,46 @@
         }
 
         function get_CoordPointInter(){
-            
-        }
-
-        function test(){
             //Je récupére la voiture courante
             el = document.getElementById("car_selector").options[document.getElementById("car_selector").selectedIndex]
             textBrut = el.text
             reg = textBrut.match(regex)
             voiture = "null"
             autonomie = reg[1];
+            distance = window.distance;
 
+            //Mettre a jour latlngs
+            latlngs = [L.latLng(marker.getLatLng().lat, marker.getLatLng().lng),L.latLng(marker2.getLatLng().lat, marker2.getLatLng().lng)]
+            const lengths = L.GeometryUtil.accumulatedLengths(latlngs);
+            const totalLength = lengths.reduce((a, b) => a + b, 0);
+
+            const interval = get_nbkmRecharge(autonomie)*1000;
+            const totalPoints = Math.floor(totalLength / interval);
+            
+            const ratios = [];
+            for (let i = 0; i <= totalPoints; i++) {
+                const ratio = i / totalPoints;
+                ratios.push(ratio);
+            }
+
+            const points = ratios.map((ratio) =>
+            GeometryUtil.interpolateOnLine(map, latlngs, ratio)
+            );
+
+            points.forEach((point) => {
+            L.marker(point.latLng).addTo(map);
+            });
+            return totalPoints;
+            /*
             //Je calcule le nombre d'arret a faire + les coordonnées des bornes les plus proches
             distanceModifiable = distance;
             nombreDarret = 0;
-            while(distanceModifiable > 0){
-                point = interpolateOnLine(map, routeControl, get_nbkmRecharge(autonomie));
-                distanceModifiable -= autonomie
-                nombreDarret += 1;
-            }
+            //while(distanceModifiable > 0){
+            point = L.GeometryUtil.interpolateOnLine(map, routeControl, 0.01*get_nbkmRecharge(autonomie));
+            distanceModifiable -= autonomie*0.9;
+            nombreDarret += 1;
+            consoleLog(point);
+            //}*/
         }
     </script>
     </body>
