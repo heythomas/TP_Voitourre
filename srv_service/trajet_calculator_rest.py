@@ -59,3 +59,5 @@ api.add_resource(CalculTempsTrajet, '/calcultempstrajet')
 
 if __name__ == '__main__':
     app.run()  # run our Flask app
+
+# ® COPYRIGHT BELLON SAVAETE CORP.
