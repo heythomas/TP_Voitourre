@@ -51,24 +51,34 @@
         #map { height: 30vw; }
     </style>
     <script>
+        // ROUTE VARIABLES
+        var routeControl;
+        window.time;
+        window.distance;
+
         // GET TRAVEL TIME
         var regex = /[^0-9]*([0-9]*)[^0-9]*([0-9]*)/;
 
         document.getElementById("test").onclick = function(){
+            traceRoute()
+        };
+
+        function get_travel_time(dist){
             el = document.getElementById("car_selector").options[document.getElementById("car_selector").selectedIndex]
             textBrut = el.text
             reg = textBrut.match(regex)
             voiture = "null"
             autonomie = reg[1];
             tps_recharge = reg[2];
-            vitesse = 130;
+            vitesse = 100;
 
-            $.get( "http://127.0.0.1:5000//calcultempstrajet", { voiture: voiture, autonomie: autonomie, tps_recharge: tps_recharge, long_trajet:1200 } )
+            $.get( "http://127.0.0.1:5000//calcultempstrajet", { voiture: voiture, autonomie: autonomie, tps_recharge: tps_recharge, long_trajet: dist } )
             .done(function( data ) {
                 alert( "Le temps de parcours sera de : " + (parseInt(parseInt(data["temps"])/60)) + "h" + (parseInt(parseInt(data["temps"])%60)<10?'0':'') + parseInt(parseInt(data["temps"])%60)  + "min");
+                window.time = data["temps"]
+                window.distance = dist
             });
-            
-        };
+        }
 
         // GET NEAREST REFUEL POINT
         function find_refuel(coo){
@@ -96,10 +106,6 @@
         // ADD LOCATION + (EDITABLE) DESTINATION
         marker = L.marker(map.getCenter()).addTo(map);
         marker2 = L.marker([45.64036370303461, 5.871814725687728]).addTo(map);
-        
-        // ROUTE VARIABLES
-        var routeControl;
-        var time;
 
         map.on('click', function(e) {
             marker.setLatLng(e.latlng).update();
@@ -114,13 +120,15 @@
                     L.latLng(marker2.getLatLng().lat, marker2.getLatLng().lng)
                 ]
             }).addTo(map);
-
+            
             routeControl.on('routesfound', function (e) {
-                distance = e.routes[0].summary.totalDistance;
-                console.log('routing distance: ' + distance);
+                distance = e.routes[0].summary.totalDistance / 1000;
+                console.log(distance);
+                // STEP TWO, GET NAIVE TIME FOR THIS ROUTE
+                get_travel_time(distance);
             });
 
-            // STEP TWO, GET NAIVE TIME FOR THIS ROUTE
+            
         }
     </script>
     </body>
