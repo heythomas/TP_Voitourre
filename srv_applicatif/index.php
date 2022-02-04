@@ -17,6 +17,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <!-- GEOMETRY UTIL -->
+    <script src="./leaflet.geometryutil.js"></script>
 </head>
     <body>
 
@@ -37,7 +40,7 @@
         }
     }catch(SoapFault $e){
         // IN CASE OF PROBLEM WITH SOAP
-        echo("Fait de tete stp merci <br/>");
+        echo("No voitoure avélableu <br/>");
     }
 
     ?>
@@ -129,6 +132,33 @@
             });
 
             
+        }
+
+        // Function nb_km avant recharge
+        function get_nbkmRecharge(autonomie){
+            return window.distance-(autonomie * 1.1);
+        }
+
+        function get_CoordPointInter(){
+            
+        }
+
+        function test(){
+            //Je récupére la voiture courante
+            el = document.getElementById("car_selector").options[document.getElementById("car_selector").selectedIndex]
+            textBrut = el.text
+            reg = textBrut.match(regex)
+            voiture = "null"
+            autonomie = reg[1];
+
+            //Je calcule le nombre d'arret a faire + les coordonnées des bornes les plus proches
+            distanceModifiable = distance;
+            nombreDarret = 0;
+            while(distanceModifiable > 0){
+                point = interpolateOnLine(map, routeControl, get_nbkmRecharge(autonomie));
+                distanceModifiable -= autonomie
+                nombreDarret += 1;
+            }
         }
     </script>
     </body>
