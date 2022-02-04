@@ -21,7 +21,7 @@ class CalculTempsTrajet(Resource):
         args = parser.parse_args()
 
         # Data
-        vitesse = 130/60
+        vitesse = 100/60
         long_trajet = float(args["long_trajet"])
         autonomie = float(args["autonomie"])
         voiture = args["voiture"]
