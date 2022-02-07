@@ -87,7 +87,7 @@
         function find_refuel(coo){
             $.get( "https://opendata.reseaux-energies.fr/api/records/1.0/search/", { dataset:"bornes-irve", q:"", rows:"1", sort:"-dist", facet:"region", "geofilter.distance":"45.6389834801384, 5.876346600707621, 5000" } )
             .done(function( data ) {
-                alert(data["records"][0]["geometry"]["coordinates"]);
+                return(data["records"][0]["geometry"]["coordinates"]);
             });
         }
 
@@ -149,38 +149,21 @@
             autonomie = reg[1];
             distance = window.distance;
 
-            //Mettre a jour latlngs
-            latlngs = [L.latLng(marker.getLatLng().lat, marker.getLatLng().lng),L.latLng(marker2.getLatLng().lat, marker2.getLatLng().lng)]
-            const lengths = L.GeometryUtil.accumulatedLengths(latlngs);
-            const totalLength = lengths.reduce((a, b) => a + b, 0);
+            nb_kmRecharge = get_nbkmRecharge();
+            console.log(nb_kmRecharge);
+            waypointCoord = [];
 
-            const interval = get_nbkmRecharge(autonomie)*1000;
-            const totalPoints = Math.floor(totalLength / interval);
-            
-            const ratios = [];
-            for (let i = 0; i <= totalPoints; i++) {
-                const ratio = i / totalPoints;
-                ratios.push(ratio);
+            while(nb_kmRecharge < distance) {
+                //Récupérer les coordonnées des points d'arret
+                coordPointArret = get_coordinate_at(nb_kmRecharge);
+                //Scanner pour trouver la borne la plus proche
+                coordBorneClose = find_refuel(coordPointArret);
+                //Ajouter les coordonnées de la borne dans waypointCoord
+                waypointCoord.append(coordBorneClose);
+                nb_kmRecharge+=;
+
             }
-
-            const points = ratios.map((ratio) =>
-            GeometryUtil.interpolateOnLine(map, latlngs, ratio)
-            );
-
-            points.forEach((point) => {
-            L.marker(point.latLng).addTo(map);
-            });
-            return totalPoints;
-            /*
-            //Je calcule le nombre d'arret a faire + les coordonnées des bornes les plus proches
-            distanceModifiable = distance;
-            nombreDarret = 0;
-            //while(distanceModifiable > 0){
-            point = L.GeometryUtil.interpolateOnLine(map, routeControl, 0.01*get_nbkmRecharge(autonomie));
-            distanceModifiable -= autonomie*0.9;
-            nombreDarret += 1;
-            consoleLog(point);
-            //}*/
+            return waypointCoord;
         }
     </script>
     </body>
