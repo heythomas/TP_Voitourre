@@ -58,6 +58,7 @@
         var routeControl;
         window.time;
         window.distance;
+        window.last_refuel;
 
         // GET TRAVEL TIME
         var regex = /[^0-9]*([0-9]*)[^0-9]*([0-9]*)/;
@@ -85,10 +86,15 @@
 
         // GET NEAREST REFUEL POINT
         function find_refuel(coo){
-            $.get( "https://opendata.reseaux-energies.fr/api/records/1.0/search/", { dataset:"bornes-irve", q:"", rows:"1", sort:"-dist", facet:"region", "geofilter.distance":"45.6389834801384, 5.876346600707621, 5000" } )
+            tosearch = coo[0]+", "+coo[1]+", 50000"
+            alert(tosearch)
+            $.get( "https://opendata.reseaux-energies.fr/api/records/1.0/search/", { dataset:"bornes-irve", q:"", rows:"1", sort:"-dist", facet:"region", "geofilter.distance":tosearch } )
             .done(function( data ) {
-                return(data["records"][0]["geometry"]["coordinates"]);
+                // alert(data["records"][0]["geometry"]["coordinates"])
+                window.last_refuel =  data["records"][0]["geometry"]["coordinates"];
             });
+
+            return true;
         }
 
         // MAP DISPLAY - Inverser latitude et longitude ici (dans setview)
@@ -137,7 +143,11 @@
 
         // Function nb_km avant recharge
         function get_nbkmRecharge(autonomie){
-            return window.distance-(autonomie * 1.1);
+            recharge = window.distance-(autonomie * 1.1);
+            if(recharge < 0){
+                return 10000000000000000000000;
+            }
+            return recharge
         }
 
         function get_CoordPointInter(){
@@ -149,21 +159,64 @@
             autonomie = reg[1];
             distance = window.distance;
 
-            nb_kmRecharge = get_nbkmRecharge();
-            console.log(nb_kmRecharge);
+            nb_kmRecharge = get_nbkmRecharge(autonomie);
             waypointCoord = [];
 
             while(nb_kmRecharge < distance) {
+                // alert("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
                 //Récupérer les coordonnées des points d'arret
                 coordPointArret = get_coordinate_at(nb_kmRecharge);
                 //Scanner pour trouver la borne la plus proche
-                coordBorneClose = find_refuel(coordPointArret);
+                find_refuel(coordPointArret);
+                alert(window.last_refuel)
+                coordBorneClose = [window.last_refuel[1], window.last_refuel[0]];
+                console.log(coordBorneClose);
                 //Ajouter les coordonnées de la borne dans waypointCoord
-                waypointCoord.append(coordBorneClose);
-                nb_kmRecharge+=;
+                waypointCoord.push(coordBorneClose);
+                nb_kmRecharge += nb_kmRecharge;
 
             }
+            console.log(waypointCoord)
             return waypointCoord;
+        }
+
+        function get_coordinate_at(km){
+            var km_parcouru = 0;
+            var list = routeControl._line._route.instructions;
+            for(i = 0; i < list.length; i++){
+                if(list[i]["distance"]/1000 + km_parcouru > km){
+                    alert([routeControl._line._route.coordinates[list[i-1]["index"]]["lat"], routeControl._line._route.coordinates[list[i-1]["index"]]["lng"]])
+                    return [routeControl._line._route.coordinates[list[i-1]["index"]]["lat"], routeControl._line._route.coordinates[list[i-1]["index"]]["lng"]];
+                }
+                else{
+                    km_parcouru += list[i]["distance"]/1000;
+                }
+            }
+            alert("ERREUR");
+            return null;
+        }
+
+        function addRefuel(){
+            tab = get_CoordPointInter();
+            // alert(tab)
+            routeControl.remove();
+            routeControl = null;
+
+            console.log(tab)
+
+            toTrace = [];
+            toTrace.push(L.latLng(marker.getLatLng().lat, marker.getLatLng().lng));
+
+            for(i = 0; i < tab.length; i++){
+                toTrace.push(L.latLng(tab[i]));
+            }
+
+            toTrace.push(L.latLng(marker2.getLatLng().lat, marker2.getLatLng().lng));
+
+            //STEP ONE, GET NAIVE ROUTE KM
+            routeControl = L.Routing.control({
+                waypoints: toTrace
+            }).addTo(map)
         }
     </script>
     </body>
