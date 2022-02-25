@@ -54,6 +54,8 @@
         #map { height: 30vw; }
     </style>
     <script>
+        // SET AJAX TO FALSE
+        jQuery.ajaxSetup({async:false}); 
         // ROUTE VARIABLES
         var routeControl;
         window.time;
@@ -64,7 +66,7 @@
         var regex = /[^0-9]*([0-9]*)[^0-9]*([0-9]*)/;
 
         document.getElementById("test").onclick = function(){
-            traceRoute()
+            traceRoute();
         };
 
         function get_travel_time(dist){
@@ -78,7 +80,7 @@
 
             $.get( "http://127.0.0.1:5000//calcultempstrajet", { voiture: voiture, autonomie: autonomie, tps_recharge: tps_recharge, long_trajet: dist } )
             .done(function( data ) {
-                alert( "Le temps de parcours sera de : " + (parseInt(parseInt(data["temps"])/60)) + "h" + (parseInt(parseInt(data["temps"])%60)<10?'0':'') + parseInt(parseInt(data["temps"])%60)  + "min");
+                // alert( "Le temps de parcours sera de : " + (parseInt(parseInt(data["temps"])/60)) + "h" + (parseInt(parseInt(data["temps"])%60)<10?'0':'') + parseInt(parseInt(data["temps"])%60)  + "min");
                 window.time = data["temps"]
                 window.distance = dist
             });
@@ -86,19 +88,23 @@
 
         // GET NEAREST REFUEL POINT
         function find_refuel(coo){
+            // Block async problems
+            window.last_refuel = false;
+            
             tosearch = coo[0]+", "+coo[1]+", 50000"
-            alert(tosearch)
+            console.log(tosearch)
             $.get( "https://opendata.reseaux-energies.fr/api/records/1.0/search/", { dataset:"bornes-irve", q:"", rows:"1", sort:"-dist", facet:"region", "geofilter.distance":tosearch } )
             .done(function( data ) {
                 // alert(data["records"][0]["geometry"]["coordinates"])
                 window.last_refuel =  data["records"][0]["geometry"]["coordinates"];
+                window.last_refuel_update = window.last_refuel;
             });
 
             return true;
         }
 
         // MAP DISPLAY - Inverser latitude et longitude ici (dans setview)
-        var map = L.map('map').setView([46.496541, 1.997267], 13);
+        var map = L.map('map').setView([45.64036370303461, 5.871814725687728], 13);
         L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
             attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
             maxZoom: 18,
@@ -113,12 +119,12 @@
         }).addTo(map);
 
         // ADD LOCATION + (EDITABLE) DESTINATION
-        marker = L.marker(map.getCenter()).addTo(map);
+        marker = L.marker([47.654288, -2.752075]).addTo(map);
         marker2 = L.marker([45.64036370303461, 5.871814725687728]).addTo(map);
 
         map.on('click', function(e) {
             marker.setLatLng(e.latlng).update();
-            console.log("Lat, Lon : " + marker.getLatLng().lat + ", " + marker.getLatLng().lng)
+            // console.log("Lat, Lon : " + marker.getLatLng().lat + ", " + marker.getLatLng().lng)
         });
 
         function traceRoute(){
@@ -133,17 +139,19 @@
             
             routeControl.on('routesfound', function (e) {
                 distance = e.routes[0].summary.totalDistance / 1000;
-                console.log(distance);
+                // console.log(distance);
                 // STEP TWO, GET NAIVE TIME FOR THIS ROUTE
                 get_travel_time(distance);
             });
 
-            
+            routeControl.on('routeselected', function (e) {
+                addRefuel();
+            });
         }
 
         // Function nb_km avant recharge
         function get_nbkmRecharge(autonomie){
-            recharge = window.distance-(autonomie * 1.1);
+            recharge = autonomie * 0.9;
             if(recharge < 0){
                 return 10000000000000000000000;
             }
@@ -156,27 +164,27 @@
             textBrut = el.text
             reg = textBrut.match(regex)
             voiture = "null"
-            autonomie = reg[1];
+            autonomie = parseInt(reg[1]);
             distance = window.distance;
 
             nb_kmRecharge = get_nbkmRecharge(autonomie);
             waypointCoord = [];
 
             while(nb_kmRecharge < distance) {
-                // alert("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
                 //Récupérer les coordonnées des points d'arret
                 coordPointArret = get_coordinate_at(nb_kmRecharge);
+                console.log(nb_kmRecharge)
+
                 //Scanner pour trouver la borne la plus proche
                 find_refuel(coordPointArret);
-                alert(window.last_refuel)
                 coordBorneClose = [window.last_refuel[1], window.last_refuel[0]];
-                console.log(coordBorneClose);
+                
                 //Ajouter les coordonnées de la borne dans waypointCoord
                 waypointCoord.push(coordBorneClose);
                 nb_kmRecharge += nb_kmRecharge;
 
             }
-            console.log(waypointCoord)
+            // console.log(waypointCoord)
             return waypointCoord;
         }
 
@@ -185,7 +193,7 @@
             var list = routeControl._line._route.instructions;
             for(i = 0; i < list.length; i++){
                 if(list[i]["distance"]/1000 + km_parcouru > km){
-                    alert([routeControl._line._route.coordinates[list[i-1]["index"]]["lat"], routeControl._line._route.coordinates[list[i-1]["index"]]["lng"]])
+                    // alert([routeControl._line._route.coordinates[list[i-1]["index"]]["lat"], routeControl._line._route.coordinates[list[i-1]["index"]]["lng"]])
                     return [routeControl._line._route.coordinates[list[i-1]["index"]]["lat"], routeControl._line._route.coordinates[list[i-1]["index"]]["lng"]];
                 }
                 else{
@@ -202,13 +210,13 @@
             routeControl.remove();
             routeControl = null;
 
-            console.log(tab)
+            // console.log(tab)
 
             toTrace = [];
             toTrace.push(L.latLng(marker.getLatLng().lat, marker.getLatLng().lng));
 
             for(i = 0; i < tab.length; i++){
-                toTrace.push(L.latLng(tab[i]));
+                toTrace.push(L.latLng(tab[i][0], tab[i][1]));
             }
 
             toTrace.push(L.latLng(marker2.getLatLng().lat, marker2.getLatLng().lng));
@@ -217,6 +225,20 @@
             routeControl = L.Routing.control({
                 waypoints: toTrace
             }).addTo(map)
+
+            // RECALCULATE TIME AND DISTANCE TO DISPLAY IT
+            routeControl.on('routesfound', function (e) {
+                distance = e.routes[0].summary.totalDistance / 1000;
+                get_travel_time(distance);
+            });
+
+            routeControl.on('routeselected', function (e) {
+                $(".leaflet-routing-alt>h3").html("<b>Distance (km) :</b>" + window.distance + "<br/><b>Durée (h) :</b>" + window.time/60);
+            });
+
+            // CAM FIT TO ROUTE
+            bounds = L.latLngBounds(toTrace);
+            map.fitBounds(bounds);
         }
     </script>
     </body>
