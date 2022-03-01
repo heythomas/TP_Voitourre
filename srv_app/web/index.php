@@ -26,7 +26,7 @@
     <?php
     try{
         // CONNECT TO SOAP PROVIDER 
-        $clientSOAP = new SoapClient("http://127.0.0.1:8000/?wsdl");
+        $clientSOAP = new SoapClient("https://soap-car-selector.herokuapp.com/?wsdl");
         $resultats = $clientSOAP->get_cars();
         
         // DISPLAY RESULTS IN A LIST
@@ -44,14 +44,39 @@
     }
 
     ?>
-
-    <div id="result">
-
-    </div>
-    <button id="test">Calculer</button>
     <div id="map"></div>
     <style>
-        #map { height: 30vw; }
+        #map {
+            margin: 0px;
+            padding: 0px;
+            height: 90vh;
+            width: 100vw;
+        }
+
+        #car_selector{
+            margin: 0px;
+            padding: 0px;
+            height: 10vh;
+            width: 100vw;
+            text-align: center;
+            font-size: 1.2vw;
+            background-color: #bababa;
+            color: white;
+        }
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            text-indent: 1px;
+            text-overflow: '';
+        }
+
+        *:focus {
+            outline: none;
+        }
+
+        body{
+            margin: 0px;
+        }
     </style>
     <script>
         // SET AJAX TO FALSE
@@ -65,10 +90,6 @@
         // GET TRAVEL TIME
         var regex = /[^0-9]*([0-9]*)[^0-9]*([0-9]*)/;
 
-        document.getElementById("test").onclick = function(){
-            traceRoute();
-        };
-
         function get_travel_time(dist){
             el = document.getElementById("car_selector").options[document.getElementById("car_selector").selectedIndex]
             textBrut = el.text
@@ -78,7 +99,7 @@
             tps_recharge = reg[2];
             vitesse = 100;
 
-            $.get( "http://127.0.0.1:5000//calcultempstrajet", { voiture: voiture, autonomie: autonomie, tps_recharge: tps_recharge, long_trajet: dist } )
+            $.get( "https://rest-calcul-temps-trajet.herokuapp.com/calcultempstrajet", { voiture: voiture, autonomie: autonomie, tps_recharge: tps_recharge, long_trajet: dist } )
             .done(function( data ) {
                 // alert( "Le temps de parcours sera de : " + (parseInt(parseInt(data["temps"])/60)) + "h" + (parseInt(parseInt(data["temps"])%60)<10?'0':'') + parseInt(parseInt(data["temps"])%60)  + "min");
                 window.time = data["temps"]
@@ -123,8 +144,20 @@
         marker2 = L.marker([45.64036370303461, 5.871814725687728]).addTo(map);
 
         map.on('click', function(e) {
-            marker.setLatLng(e.latlng).update();
-            // console.log("Lat, Lon : " + marker.getLatLng().lat + ", " + marker.getLatLng().lng)
+            if(document.getElementById("car_selector").options[document.getElementById("car_selector").selectedIndex].text == "Veuillez sélectionner une voiture..."){
+                alert("Veuillez sélectionner un véhicule avant de choisir une route...")
+            }
+            else{
+                map.eachLayer((layer) => {
+                    if(layer['_latlng']!=undefined)
+                        layer.remove();
+                });
+                if(routeControl != undefined){
+                    routeControl.remove();
+                }
+                marker.setLatLng(e.latlng).update();
+                traceRoute();
+            }
         });
 
         function traceRoute(){
